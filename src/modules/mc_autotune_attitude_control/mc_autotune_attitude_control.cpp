@@ -108,7 +108,7 @@ void McAutotuneAttitudeControl::Run()
 
 		if (_vehicle_command_sub.copy(&vehicle_command)) {
 			if (vehicle_command.command == vehicle_command_s::VEHICLE_CMD_DO_AUTOTUNE_ENABLE) {
-				if (fabsf(vehicle_command.param1 - 1.0f) < FLT_EPSILON) {
+				if (fabsf(vehicle_command.param1 - 1.0f) < FLT_EPSILON && fabsf(vehicle_command.param2) < FLT_EPSILON) {
 					_vehicle_cmd_start_autotune = true;
 				}
 			}

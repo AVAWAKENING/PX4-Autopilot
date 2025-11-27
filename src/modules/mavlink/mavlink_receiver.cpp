@@ -652,11 +652,7 @@ void MavlinkReceiver::handle_message_command_both(mavlink_message_t *msg, const 
 			}
 		}
 
-		if (has_module && fabsf(vehicle_command.param1 - 1.f) <= FLT_EPSILON) {
-
-			if (fabsf(vehicle_command.param2) > FLT_EPSILON) {
-				PX4_WARN("Autotune axis selection not supported through mavlink. Use FW_AT_AXES to set axes for fixed-wing vehicles.");
-			}
+		if (has_module && fabsf(vehicle_command.param1 - 1.f) <= FLT_EPSILON && fabsf(vehicle_command.param2) < FLT_EPSILON) {
 
 			// most are in progress
 			result = vehicle_command_ack_s::VEHICLE_CMD_RESULT_IN_PROGRESS;
@@ -710,7 +706,7 @@ void MavlinkReceiver::handle_message_command_both(mavlink_message_t *msg, const 
 				break;
 			}
 
-		} else if (has_module && fabsf(vehicle_command.param1 - 1.f) > FLT_EPSILON) {
+		} else if (has_module && (fabsf(vehicle_command.param1 - 1.f) > FLT_EPSILON || fabsf(vehicle_command.param2) > FLT_EPSILON)) {
 
 			result = vehicle_command_ack_s::VEHICLE_CMD_RESULT_DENIED;
 
