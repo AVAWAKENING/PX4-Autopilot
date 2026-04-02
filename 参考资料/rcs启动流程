@@ -1,0 +1,98 @@
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                           PX4 启动流程 (SYS_AUTOSTART=4001)                  │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+rcS
+│
+├── 1. 初始化环境变量
+│      set R /
+│      set VEHICLE_TYPE none
+│
+├── 2. 挂载SD卡
+│      mount /dev/mmcsd0 /fs/microsd
+│
+├── 3. 加载参数
+│      param load /fs/mtd_caldata
+│      param import
+│
+├── 4. 板级默认配置
+│      . rc.board_defaults
+│      (可能设置 SYS_AUTOSTART=4001)
+│
+├── 5. rc.autostart ─────────────────────────────────────────────┐
+│      │                                                          │
+│      ├── 检查 SYS_AUTOSTART 参数值                              │
+│      │   if param compare SYS_AUTOSTART 4001                    │
+│      │   then set AIRFRAME 4001_quad_x                          │
+│      │                                                          │
+│      └── 执行机型配置                                            │
+│          . /etc/init.d/airframes/4001_quad_x ──────────────────┐│
+│                                                                 ││
+├── 6. 启动基础服务                                               ││
+│      tone_alarm, dataman, send_event, load_mon, rgbled         ││
+│                                                                 ││
+├── 7. 启动传感器                                                 ││
+│      . rc.sensors                                               ││
+│      sensors start                                              ││
+│                                                                 ││
+├── 8. 状态估计                                                   ││
+│      ekf2 start                                                 ││
+│                                                                 ││
+├── 9. RC输入                                                     ││
+│      rc_update start                                            ││
+│      manual_control start                                       ││
+│                                                                 ││
+├── 10. Commander                                                 ││
+│      commander start                                            ││
+│      dshot start                                                ││
+│      pwm_out start                                              ││
+│                                                                 ││
+├── 11. rc.vehicle_setup ────────────────────────────────────────┘│
+│      │                                                           │
+│      └── 检查 VEHICLE_TYPE                                       │
+│          if [ $VEHICLE_TYPE = mc ]                               │
+│          then . rc.mc_apps ─────────────────────────────────────┘
+│
+├── 12. 导航通信
+│      navigator start
+│      mavlink start
+│
+└── 13. 日志
+       logger start
+
+
+4001_quad_x (机型配置)
+│
+├── . rc.mc_defaults ────────────────────────────────────────────┐
+│      │                                                          │
+│      ├── set VEHICLE_TYPE mc    ← 关键! 设置车辆类型            │
+│      │                                                          │
+│      └── 设置默认参数                                           │
+│          MAV_TYPE=2                                             │
+│          NAV_ACC_RAD=2                                          │
+│          RTL_RETURN_ALT=30                                      │
+│          ...                                                    │
+│                                                                 │
+└── 设置控制分配参数                                              │
+     CA_ROTOR_COUNT=4                                             │
+     CA_ROTOR0_PX/PY=1/1                                          │
+     CA_ROTOR1_PX/PY=-1/-1                                        │
+     CA_ROTOR2_PX/PY=1/-1, KM=-0.05                               │
+     CA_ROTOR3_PX/PY=-1/1, KM=-0.05                               │
+
+
+rc.mc_apps (多旋翼应用)
+│
+├── control_allocator start      # 控制分配
+│
+├── mc_rate_control start        # 角速度控制
+│
+├── mc_att_control start         # 姿态控制
+│
+├── mc_hover_thrust_estimator start  # 悬停推力估计
+│
+├── flight_mode_manager start    # 飞行模式管理
+│
+├── mc_pos_control start         # 位置控制
+│
+└── land_detector start multicopter  # 着陆检测

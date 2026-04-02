@@ -76,6 +76,7 @@
 #include "streams/EXTENDED_SYS_STATE.hpp"
 #include "streams/FLIGHT_INFORMATION.hpp"
 #include "streams/GLOBAL_POSITION_INT.hpp"
+#include "streams/GNSS_LOW_BANDWIDTH_POSITION.hpp"
 #include "streams/GPS_GLOBAL_ORIGIN.hpp"
 #include "streams/GPS_RAW_INT.hpp"
 #include "streams/GPS_RTCM_DATA.hpp"
@@ -317,6 +318,9 @@ static const StreamListItem streams_list[] = {
 #if defined(GLOBAL_POSITION_INT_HPP)
 	create_stream_list_item<MavlinkStreamGlobalPositionInt>(),
 #endif // GLOBAL_POSITION_INT_HPP
+#if defined(GNSS_LOW_BANDWIDTH_POSITION_HPP)
+	create_stream_list_item<MavlinkStreamGnssLowBandwidthPosition>(),
+#endif // GNSS_LOW_BANDWIDTH_POSITION_HPP
 #if defined(LANDING_TARGET_HPP)
 	create_stream_list_item<MavlinkStreamLandingTarget>(),
 #endif
