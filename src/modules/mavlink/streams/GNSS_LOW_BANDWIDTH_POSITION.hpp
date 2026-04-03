@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- *   Copyright (c) 2026 PX4 Development Team. All rights reserved.
+ *   Copyright (c) 2021 PX4 Development Team. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -34,7 +34,9 @@
 #ifndef GNSS_LOW_BANDWIDTH_POSITION_HPP
 #define GNSS_LOW_BANDWIDTH_POSITION_HPP
 
-#include <uORB/topics/gnss_low_bandwidth_position.h>
+#include <uORB/topics/sensor_gps.h>
+#include <uORB/topics/vehicle_local_position.h>
+#include <uORB/topics/vehicle_global_position.h>
 
 class MavlinkStreamGnssLowBandwidthPosition : public MavlinkStream
 {
@@ -49,30 +51,48 @@ public:
 
 	unsigned get_size() override
 	{
-		return _gnss_low_bandwidth_sub.advertised() ? MAVLINK_MSG_ID_GNSS_LOW_BANDWIDTH_POSITION_LEN + MAVLINK_NUM_NON_PAYLOAD_BYTES : 0;
+		return _gps_sub.advertised() ? MAVLINK_MSG_ID_GNSS_LOW_BANDWIDTH_POSITION_LEN + MAVLINK_NUM_NON_PAYLOAD_BYTES : 0;
 	}
 
 private:
 	explicit MavlinkStreamGnssLowBandwidthPosition(Mavlink *mavlink) : MavlinkStream(mavlink) {}
 
-	uORB::Subscription _gnss_low_bandwidth_sub{ORB_ID(gnss_low_bandwidth_position)};
+	uORB::Subscription _gps_sub{ORB_ID(sensor_gps)};
+	uORB::Subscription _lpos_sub{ORB_ID(vehicle_local_position)};
+	uORB::Subscription _gpos_sub{ORB_ID(vehicle_global_position)};
 
 	bool send() override
 	{
-		gnss_low_bandwidth_position_s gnss_data;
+		sensor_gps_s gps;
+		vehicle_local_position_s lpos;
+		vehicle_global_position_s gpos;
 
-		if (_gnss_low_bandwidth_sub.update(&gnss_data)) {
+		if (_gps_sub.update(&gps) && _lpos_sub.update(&lpos) && _gpos_sub.update(&gpos)) {
+
 			mavlink_gnss_low_bandwidth_position_t msg{};
 
-			msg.lat = gnss_data.lat;
-			msg.lon = gnss_data.lon;
-			msg.alt = gnss_data.alt;
-			msg.vn = gnss_data.vn;
-			msg.ve = gnss_data.ve;
-			msg.vd = gnss_data.vd;
-			msg.heading = gnss_data.heading;
-			msg.satellites_visible = gnss_data.satellites;
-			msg.fix_type = gnss_data.fix_type;
+			msg.lat = gps.latitude_deg * 1e7;
+			msg.lon = gps.longitude_deg * 1e7;
+			msg.alt = gps.altitude_msl_m * 1000;
+
+			if (gpos.terrain_alt_valid) {
+				msg.relative_alt = ((float)gps.altitude_msl_m - (float)gpos.terrain_alt) * 1000;
+
+			} else if (lpos.dist_bottom_valid) {
+				msg.relative_alt = lpos.dist_bottom * 1000;
+
+			} else {
+				msg.relative_alt = 0;
+			}
+
+			msg.vn = fabsf(lpos.vx) * 100.0f;
+			msg.ve = fabsf(lpos.vy) * 100.0f;
+			msg.vd = fabsf(lpos.vz) * 100.0f;
+
+			msg.heading = static_cast<uint16_t>(math::degrees(matrix::wrap_2pi(lpos.heading)) * 100.0f);
+
+			msg.satellites_visible = gps.satellites_used;
+			msg.fix_type = gps.fix_type;
 
 			mavlink_msg_gnss_low_bandwidth_position_send_struct(_mavlink->get_channel(), &msg);
 
