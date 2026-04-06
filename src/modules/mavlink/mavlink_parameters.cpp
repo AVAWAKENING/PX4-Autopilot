@@ -291,30 +291,48 @@ void
 MavlinkParametersManager::send()
 {
 	if (!_first_send) {
+		param_clear_all_used();
 		// parameters QGC can't tolerate not finding (2020-11-11)
-		param_find("BAT_CRIT_THR");
-		param_find("BAT_EMERGEN_THR");
-		param_find("BAT_LOW_THR");
+		// param_find("BAT_CRIT_THR");
+		// param_find("BAT_EMERGEN_THR");
+		// param_find("BAT_LOW_THR");
 		param_find("CAL_ACC0_ID");
 		param_find("CAL_GYRO0_ID");
-		param_find("CAL_MAG0_ID");
-		param_find("CAL_MAG0_ROT");
-		param_find("CAL_MAG1_ID");
-		param_find("CAL_MAG1_ROT");
-		param_find("CAL_MAG2_ID");
-		param_find("CAL_MAG2_ROT");
-		param_find("CAL_MAG3_ID");
-		param_find("CAL_MAG3_ROT");
+		// param_find("CAL_MAG0_ID");
+		// param_find("CAL_MAG0_ROT");
+		// param_find("CAL_MAG1_ID");
+		// param_find("CAL_MAG1_ROT");
+		// param_find("CAL_MAG2_ID");
+		// param_find("CAL_MAG2_ROT");
+		// param_find("CAL_MAG3_ID");
+		// param_find("CAL_MAG3_ROT");
 		param_find("SENS_BOARD_ROT");
-		param_find("SENS_BOARD_X_OFF");
-		param_find("SENS_BOARD_Y_OFF");
-		param_find("SENS_BOARD_Z_OFF");
+		// param_find("SENS_BOARD_X_OFF");
+		// param_find("SENS_BOARD_Y_OFF");
+		// param_find("SENS_BOARD_Z_OFF");
 		param_find("SENS_DPRES_OFF");
-		param_find("TRIG_MODE");
+		// param_find("TRIG_MODE");
 		param_find("UAVCAN_ENABLE");
+
+		// system parameters
+		param_find("MAV_SYS_ID");
+		param_find("SYS_AUTOSTART");
+
+		// battery parameters
+		param_find("BAT1_SOURCE");
+		param_find("BAT1_N_CELLS");
+		param_find("BAT1_V_CHARGED");
+		param_find("BAT1_V_EMPTY");
 
 		// parameter only used in startup script but should show on ground station
 		param_find("SYS_PARAM_VER");
+
+		param_find("BAT_V_OFFS_CURR");
+		param_find("BAT1_V_DIV");
+		param_find("BAT1_A_PER_V");
+		param_find("BAT1_V_CHANNEL");
+		param_find("BAT1_I_CHANNEL");
+		param_find("BAT1_I_OVERWRITE");
 
 		_first_send = true;
 	}

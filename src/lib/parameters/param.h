@@ -259,6 +259,12 @@ __EXPORT int		param_set_default_value(param_t param, const void *val);
 __EXPORT void		param_set_used(param_t param);
 
 /**
+ * Clear all parameters' used status. After calling this, no parameters will be sent to a GCS
+ * until they are marked as used again via param_find() or param_set_used().
+ */
+__EXPORT void		param_clear_all_used(void);
+
+/**
  * Set the value of a parameter, but do not notify the system about the change.
  *
  * @param param		A handle returned by param_find or passed by param_foreach.

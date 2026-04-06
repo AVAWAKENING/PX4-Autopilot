@@ -532,6 +532,11 @@ void param_set_used(param_t param)
 	}
 }
 
+void param_clear_all_used()
+{
+	params_active.reset();
+}
+
 int param_set_default_value(param_t param, const void *val)
 {
 	if (!handle_in_range(param)) {
