@@ -34,9 +34,9 @@
 #ifndef GNSS_LOW_BANDWIDTH_POSITION_HPP
 #define GNSS_LOW_BANDWIDTH_POSITION_HPP
 
+#include <uORB/topics/home_position.h>
 #include <uORB/topics/sensor_gps.h>
 #include <uORB/topics/vehicle_local_position.h>
-#include <uORB/topics/vehicle_global_position.h>
 
 class MavlinkStreamGnssLowBandwidthPosition : public MavlinkStream
 {
@@ -51,23 +51,22 @@ public:
 
 	unsigned get_size() override
 	{
-		return _gps_sub.advertised() ? MAVLINK_MSG_ID_GNSS_LOW_BANDWIDTH_POSITION_LEN + MAVLINK_NUM_NON_PAYLOAD_BYTES : 0;
+		return MAVLINK_MSG_ID_GNSS_LOW_BANDWIDTH_POSITION_LEN + MAVLINK_NUM_NON_PAYLOAD_BYTES;
 	}
 
 private:
 	explicit MavlinkStreamGnssLowBandwidthPosition(Mavlink *mavlink) : MavlinkStream(mavlink) {}
 
 	uORB::Subscription _gps_sub{ORB_ID(sensor_gps)};
+	uORB::Subscription _home_sub{ORB_ID(home_position)};
 	uORB::Subscription _lpos_sub{ORB_ID(vehicle_local_position)};
-	uORB::Subscription _gpos_sub{ORB_ID(vehicle_global_position)};
 
 	bool send() override
 	{
 		sensor_gps_s gps;
 		vehicle_local_position_s lpos;
-		vehicle_global_position_s gpos;
 
-		if (_gps_sub.update(&gps) && _lpos_sub.update(&lpos) && _gpos_sub.update(&gpos)) {
+		if (_gps_sub.update(&gps) && _lpos_sub.update(&lpos)) {
 
 			mavlink_gnss_low_bandwidth_position_t msg{};
 
@@ -75,11 +74,16 @@ private:
 			msg.lon = gps.longitude_deg * 1e7;
 			msg.alt = gps.altitude_msl_m * 1000;
 
-			if (gpos.terrain_alt_valid) {
-				msg.relative_alt = ((float)gps.altitude_msl_m - (float)gpos.terrain_alt) * 1000;
+			if (lpos.z_valid) {
+				home_position_s home{};
+				_home_sub.copy(&home);
 
-			} else if (lpos.dist_bottom_valid) {
-				msg.relative_alt = lpos.dist_bottom * 1000;
+				if (home.valid_alt) {
+					msg.relative_alt = -(lpos.z - home.z) * 1000;
+
+				} else {
+					msg.relative_alt = -lpos.z * 1000;
+				}
 
 			} else {
 				msg.relative_alt = 0;

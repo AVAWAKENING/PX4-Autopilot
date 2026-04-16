@@ -291,7 +291,7 @@ void
 MavlinkParametersManager::send()
 {
 	if (!_first_send) {
-		param_clear_all_used();
+		// param_clear_all_used();
 		// parameters QGC can't tolerate not finding (2020-11-11)
 		// param_find("BAT_CRIT_THR");
 		// param_find("BAT_EMERGEN_THR");
@@ -333,6 +333,10 @@ MavlinkParametersManager::send()
 		param_find("BAT1_V_CHANNEL");
 		param_find("BAT1_I_CHANNEL");
 		param_find("BAT1_I_OVERWRITE");
+
+		// mavlink parameters
+		param_find("MAV_0_MODE");
+
 
 		_first_send = true;
 	}
