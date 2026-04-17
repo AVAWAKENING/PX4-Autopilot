@@ -1,192 +1,194 @@
-# PX4-Autopilot 项目设计范式
+# PX4 事件系统禁用指南
 
-本文档记录PX4飞控系统的设计范式和关键概念，帮助理解项目架构。
+## 概述
 
----
+本文档说明如何在 PX4 中完全禁用事件（不通过 MAVLink 发送，也不记录到日志）。
 
-## EKF2 位置估计有效性判断机制
+## 事件日志级别
 
-### 概述
+PX4 事件系统使用两个独立的日志级别：
 
-PX4使用EKF2（扩展卡尔曼滤波器）进行位置估计。位置估计的有效性通过"惯性推算超时"机制来判断。当辅助传感器数据丢失时，系统会进入纯惯性推算模式，如果超过设定时间仍无辅助数据，位置估计将被标记为无效。
+1. **External Level** - 控制是否通过 MAVLink 发送到地面站
+2. **Internal Level** - 控制是否记录到飞行日志
 
-### 核心概念
+## 完全禁用事件的方法
 
-#### 1. 本地位置估计 (Local Position)
+### 方法 1：使用 `events::Log::Disabled`（推荐）
 
-本地位置是在NED（北东地）坐标系下的位置估计，原点为EKF2启动时的飞行器位置。
+最简单的方式是只传入 `events::Log::Disabled`，这样 external 和 internal 都会被设置为 Disabled：
 
-**相关消息**: `VehicleLocalPosition.msg`
-
-#### 2. 全局位置估计 (Global Position)
-
-全局位置是在WGS84坐标系下的位置估计（经度、纬度、高度）。
-
-**相关消息**: `VehicleGlobalPosition.msg`
-
-### 有效性判断逻辑
-
-#### 水平位置有效性 (xy_valid)
-
-**判断函数**: `isLocalHorizontalPositionValid()`
-
-**核心代码** ([ekf.h:231-234](src/modules/ekf2/EKF/ekf.h#L231-L234)):
 ```cpp
-bool isLocalHorizontalPositionValid() const
-{
-    return !_horizontal_deadreckon_time_exceeded;
+events::send(events::ID("event_name"), 
+             events::Log::Disabled, 
+             "消息内容");
+```
+
+**原理**：`LogLevels` 的单参数构造函数会将 internal 设置为与 external 相同的值。
+
+### 方法 2：显式设置两个级别都为 Disabled
+
+```cpp
+events::send(events::ID("event_name"), 
+             {events::Log::Disabled, events::LogInternal::Disabled}, 
+             "消息内容");
+```
+
+这种方式更明确，代码可读性更好。
+
+## 实际示例
+
+### 示例 1：完全禁用调试事件
+
+**修改前**：
+```cpp
+events::send(events::ID("module_debug_info"), 
+             events::Log::Debug, 
+             "调试信息");
+```
+
+**修改后**：
+```cpp
+events::send(events::ID("module_debug_info"), 
+             events::Log::Disabled, 
+             "调试信息 - 已禁用");
+```
+
+### 示例 2：禁用警告事件
+
+**修改前**：
+```cpp
+events::send(events::ID("mavlink_mission_storage_write_failure2"), 
+             events::Log::Critical,
+             "Storage write failure");
+```
+
+**修改后**：
+```cpp
+events::send(events::ID("mavlink_mission_storage_write_failure2"), 
+             events::Log::Disabled,
+             "Storage write failure - 已禁用");
+```
+
+### 示例 3：根据条件动态禁用
+
+```cpp
+// 根据配置决定是否启用
+bool enable_events = false; // 从参数或配置读取
+
+auto log_level = enable_events ? 
+                 events::Log::Info : 
+                 events::Log::Disabled;
+
+events::send(events::ID("module_conditional_event"), 
+             log_level, 
+             "条件事件");
+```
+
+## 禁用效果验证
+
+### 1. MAVLink 不发送
+
+在 `src/modules/mavlink/mavlink_main.cpp` 中，external 为 Disabled 的事件会被过滤：
+
+```cpp
+if (events::externalLogLevel(orb_event.log_levels) == events::LogLevel::Disabled) {
+    continue; // 不插入到 event buffer，不发送
 }
 ```
 
-**辅助源类型**:
+### 2. 日志不记录
 
-1. **水平位置辅助源** ([estimator_interface.cpp:618-623](src/modules/ekf2/EKF/estimator_interface.cpp#L618-L623)):
-   - `gnss_pos`: GPS/GNSS位置
-   - `ev_pos`: 视觉位置
-   - `aux_gpos`: 辅助全局位置
+在 `src/modules/logger/logger.cpp` 中，internal 为 Disabled 的事件会被跳过：
 
-2. **水平速度辅助源** ([estimator_interface.cpp:625-633](src/modules/ekf2/EKF/estimator_interface.cpp#L625-L633)):
-   - `gnss_vel`: GPS/GNSS速度
-   - `ev_vel`: 视觉速度
-   - `opt_flow`: 光流
-   - `fuse_aspd && fuse_beta`: 空速和侧滑角组合（固定翼）
-
-**更新逻辑** ([ekf_helper.cpp:800-898](src/modules/ekf2/EKF/ekf_helper.cpp#L800-L898)):
-- 当有辅助源激活且最近有数据融合时，重置超时计时器
-- 当所有辅助源丢失超过 `EKF2_NOAID_TOUT` 时间，标记为无效
-
-#### 垂直位置有效性 (z_valid)
-
-**判断函数**: `isLocalVerticalPositionValid()`
-
-**核心代码** ([ekf.h:236-239](src/modules/ekf2/EKF/ekf.h#L236-L239)):
 ```cpp
-bool isLocalVerticalPositionValid() const
-{
-    return !_vertical_position_deadreckon_time_exceeded;
+if (events::internalLogLevel(orb_event->log_levels) == events::LogLevelInternal::Disabled) {
+    ++_event_sequence_offset; // skip this event
+    // 不写入日志文件
 }
 ```
 
-**辅助源类型** ([estimator_interface.cpp:656-662](src/modules/ekf2/EKF/estimator_interface.cpp#L656-L662)):
-- `gnss_hgt`: GPS高度
-- `baro_hgt`: 气压高度
-- `rng_hgt`: 测距仪高度
-- `ev_hgt`: 视觉高度
+## 常见禁用场景
 
-**更新逻辑** ([ekf_helper.cpp:900-919](src/modules/ekf2/EKF/ekf_helper.cpp#L900-L919)):
-- 当有垂直位置辅助源激活时，重置超时计时器
-- 当所有垂直位置辅助源丢失超过 `EKF2_NOAID_TOUT` 时间，标记为无效
+### 场景 1：调试期间的事件
 
-#### 垂直速度有效性 (v_z_valid)
-
-**判断函数**: `isLocalVerticalVelocityValid()`
-
-**核心代码** ([ekf.h:241-244](src/modules/ekf2/EKF/ekf.h#L241-L244)):
 ```cpp
-bool isLocalVerticalVelocityValid() const
-{
-    return !_vertical_velocity_deadreckon_time_exceeded;
-}
+// 调试完成后禁用
+events::send(events::ID("module_init_debug"), 
+             events::Log::Disabled, 
+             "模块初始化调试信息");
 ```
 
-**辅助源类型** ([estimator_interface.cpp:674-678](src/modules/ekf2/EKF/estimator_interface.cpp#L674-L678)):
-- `gnss_vel`: GPS/GNSS速度
-- `ev_vel`: 视觉速度
+### 场景 2：频繁触发的内部事件
 
-**更新逻辑**:
-- 当有垂直速度辅助源激活时，重置超时计时器
-- 当所有垂直速度辅助源丢失超过超时时间，**且**垂直位置已无效时，标记为无效
-
-#### 全局水平位置有效性 (lat_lon_valid)
-
-**判断函数**: `isGlobalHorizontalPositionValid()`
-
-**核心代码** ([ekf.h:221-224](src/modules/ekf2/EKF/ekf.h#L221-L224)):
 ```cpp
-bool isGlobalHorizontalPositionValid() const
-{
-    return _local_origin_lat_lon.isInitialized() && isLocalHorizontalPositionValid();
-}
+// 频繁触发的事件，避免刷屏
+events::send(events::ID("sensor_data_received"), 
+             events::Log::Disabled, 
+             "传感器数据接收");
 ```
 
-**条件**:
-1. 本地原点经纬度已初始化
-2. 本地水平位置有效
+### 场景 3：已废弃但保留的事件
 
-#### 全局垂直位置有效性 (alt_valid)
-
-**判断函数**: `isGlobalVerticalPositionValid()`
-
-**核心代码** ([ekf.h:226-229](src/modules/ekf2/EKF/ekf.h#L226-L229)):
 ```cpp
-bool isGlobalVerticalPositionValid() const
-{
-    return PX4_ISFINITE(_local_origin_alt) && isLocalVerticalPositionValid();
-}
+// 保留事件定义但不激活
+events::send(events::ID("legacy_warning"), 
+             {events::Log::Disabled, events::LogInternal::Disabled}, 
+             "已废弃的警告");
 ```
 
-**条件**:
-1. 本地原点高度有效（非NaN/Inf）
-2. 本地垂直位置有效
+## 日志级别对照表
 
-### 关键参数
+| 级别 | External (MAVLink) | Internal (日志) | 说明 |
+|------|-------------------|----------------|------|
+| `events::Log::Disabled` | ❌ 不发送 | ❌ 不记录 | 完全禁用 |
+| `{Log::Disabled, LogInternal::Info}` | ❌ 不发送 | ✅ 记录为 Info | 仅日志 |
+| `{Log::Info, LogInternal::Disabled}` | ✅ 发送 | ❌ 不记录 | 仅通知 |
+| `events::Log::Info` | ✅ 发送 | ✅ 记录为 Info | 默认行为 |
 
-#### EKF2_NOAID_TOUT
+## 注意事项
 
-**定义位置**: [module.yaml:76-86](src/modules/ekf2/module.yaml#L76-L86)
+1. **uORB 仍会发布**：即使设置为 Disabled，事件仍会发布到 uORB topic，只是在 MAVLink 和 logger 中被过滤
+2. **性能影响**：如果完全不需要某个事件，最好直接删除 `events::send()` 调用
+3. **事件 ID 冲突**：禁用的事件 ID 仍然被占用，避免后续使用相同名称
+4. **向后兼容**：保留禁用的事件定义有助于代码维护和未来启用
 
-**参数说明**:
-- **描述**: 最大惯性推算时间
-- **默认值**: 5,000,000 微秒（5秒）
-- **范围**: 500,000 - 10,000,000 微秒（0.5-10秒）
-- **单位**: 微秒
-- **作用**: 当辅助传感器数据丢失后，系统进入纯惯性推算模式。如果超过此时间仍无辅助数据，位置估计将被标记为无效。
+## 批量禁用示例
 
-**使用位置** ([common.h:482](src/modules/ekf2/EKF/common.h#L482)):
+如果需要批量禁用某个模块的所有事件：
+
 ```cpp
-int32_t valid_timeout_max{5'000'000};  // 默认5秒
+// 在模块头文件定义日志级别
+#ifdef DISABLE_MODULE_EVENTS
+    #define MODULE_LOG_LEVEL events::Log::Disabled
+#else
+    #define MODULE_LOG_LEVEL events::Log::Info
+#endif
+
+// 使用时
+events::send(events::ID("module_event1"), 
+             MODULE_LOG_LEVEL, 
+             "事件 1");
+
+events::send(events::ID("module_event2"), 
+             MODULE_LOG_LEVEL, 
+             "事件 2");
 ```
 
-### 消息发布逻辑
+## 相关文件
 
-位置估计有效性标志在EKF2模块中设置并发布：
+- 事件定义头文件：`platforms/common/include/px4_platform_common/events.h`
+- 生成的事件定义：`src/lib/events/libevents/libs/cpp/generated/events_generated.h`
+- MAVLink 事件处理：`src/modules/mavlink/mavlink_events.cpp`
+- 日志事件处理：`src/modules/logger/logger.cpp`
 
-**VehicleLocalPosition** ([EKF2.cpp:1566-1571](src/modules/ekf2/EKF2.cpp#L1566-L1571)):
+## 总结
+
+完全禁用事件的标准做法：
+
 ```cpp
-lpos.xy_valid = _ekf.isLocalHorizontalPositionValid();
-lpos.v_xy_valid = _ekf.isLocalHorizontalPositionValid();
-lpos.z_valid = _ekf.isLocalVerticalPositionValid() || _ekf.isLocalVerticalVelocityValid();
-lpos.v_z_valid = _ekf.isLocalVerticalVelocityValid() || _ekf.isLocalVerticalPositionValid();
+events::send(events::ID("event_name"), 
+             events::Log::Disabled, 
+             "消息内容");
 ```
 
-**VehicleGlobalPosition** ([EKF2.cpp:1179-1182](src/modules/ekf2/EKF2.cpp#L1179-L1182)):
-```cpp
-global_pos.lat_lon_valid = _ekf.isGlobalHorizontalPositionValid();
-global_pos.alt_valid = _ekf.isGlobalVerticalPositionValid();
-```
-
-### 设计要点
-
-1. **分层判断**: 本地位置有效性是基础，全局位置有效性依赖于本地位置有效性
-2. **超时机制**: 使用时间超时来判断辅助源是否有效，避免硬性切换
-3. **多源融合**: 支持多种辅助源，提高系统鲁棒性
-4. **速度与位置分离**: 垂直方向的速度和位置有效性分开判断，提供更灵活的状态管理
-
-### 相关文件
-
-- **核心逻辑**: 
-  - `src/modules/ekf2/EKF/ekf.h` - 有效性判断函数定义
-  - `src/modules/ekf2/EKF/ekf_helper.cpp` - 死推算状态更新
-  - `src/modules/ekf2/EKF/estimator_interface.cpp` - 辅助源计数
-  
-- **消息定义**:
-  - `msg/versioned/VehicleLocalPosition.msg` - 本地位置消息
-  - `msg/versioned/VehicleGlobalPosition.msg` - 全局位置消息
-  
-- **参数配置**:
-  - `src/modules/ekf2/module.yaml` - EKF2参数定义
-  - `src/modules/ekf2/EKF/common.h` - 参数默认值
-
----
-
-*最后更新: 2026-04-13*
+这样可以确保事件既不发送到地面站，也不记录到飞行日志，实现完全禁用。

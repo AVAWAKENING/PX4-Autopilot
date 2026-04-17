@@ -2438,7 +2438,12 @@ Mavlink::task_main(int argc, char *argv[])
 				event_s orb_event;
 
 				while (_event_sub.update(&orb_event)) {
-					if (events::externalLogLevel(orb_event.log_levels) == events::LogLevel::Disabled) {
+					const events::LogLevel external_level = events::externalLogLevel(orb_event.log_levels);
+
+					// Skip if disabled or not Info/Notice level
+					if (external_level == events::LogLevel::Disabled ||
+					    (external_level != events::LogLevel::Info &&
+					     external_level != events::LogLevel::Notice)) {
 						++event_sequence_offset; // skip this event
 
 					} else {

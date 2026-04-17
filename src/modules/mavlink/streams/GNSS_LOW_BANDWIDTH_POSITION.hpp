@@ -34,6 +34,7 @@
 #ifndef GNSS_LOW_BANDWIDTH_POSITION_HPP
 #define GNSS_LOW_BANDWIDTH_POSITION_HPP
 
+#include <uORB/topics/battery_status.h>
 #include <uORB/topics/home_position.h>
 #include <uORB/topics/sensor_gps.h>
 #include <uORB/topics/vehicle_local_position.h>
@@ -57,6 +58,7 @@ public:
 private:
 	explicit MavlinkStreamGnssLowBandwidthPosition(Mavlink *mavlink) : MavlinkStream(mavlink) {}
 
+	uORB::Subscription _battery_sub{ORB_ID(battery_status)};
 	uORB::Subscription _gps_sub{ORB_ID(sensor_gps)};
 	uORB::Subscription _home_sub{ORB_ID(home_position)};
 	uORB::Subscription _lpos_sub{ORB_ID(vehicle_local_position)};
@@ -73,6 +75,7 @@ private:
 			msg.lat = gps.latitude_deg * 1e7;
 			msg.lon = gps.longitude_deg * 1e7;
 			msg.alt = gps.altitude_msl_m * 1000;
+			msg.altitude_ellipsoid_mm = static_cast<int32_t>(gps.altitude_ellipsoid_m * 1000.0);
 
 			if (lpos.z_valid) {
 				home_position_s home{};
@@ -97,6 +100,13 @@ private:
 
 			msg.satellites_visible = gps.satellites_used;
 			msg.fix_type = gps.fix_type;
+
+			battery_status_s battery;
+			if (_battery_sub.copy(&battery) && battery.remaining >= 0.0f) {
+				msg.battery_remaining = static_cast<uint8_t>(battery.remaining * 100.0f);
+			} else {
+				msg.battery_remaining = UINT8_MAX;
+			}
 
 			mavlink_msg_gnss_low_bandwidth_position_send_struct(_mavlink->get_channel(), &msg);
 
