@@ -92,11 +92,11 @@ private:
 				msg.relative_alt = 0;
 			}
 
-			msg.vn = fabsf(lpos.vx) * 100.0f;
-			msg.ve = fabsf(lpos.vy) * 100.0f;
-			msg.vd = fabsf(lpos.vz) * 100.0f;
+			msg.vn = -lpos.vx * 100.0f;
+		msg.ve = lpos.vy * 100.0f;
+		msg.vd = lpos.vz * 100.0f;
 
-			msg.heading = static_cast<uint16_t>(math::degrees(matrix::wrap_2pi(lpos.heading)) * 100.0f);
+		msg.heading = static_cast<uint16_t>(math::degrees(lpos.heading) * 100.0f);
 
 			msg.satellites_visible = gps.satellites_used;
 			msg.fix_type = gps.fix_type;
