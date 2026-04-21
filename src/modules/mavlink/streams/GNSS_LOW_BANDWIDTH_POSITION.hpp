@@ -92,9 +92,9 @@ private:
 				msg.relative_alt = 0;
 			}
 
-			msg.vn = -lpos.vx * 100.0f;
-		msg.ve = lpos.vy * 100.0f;
-		msg.vd = lpos.vz * 100.0f;
+			msg.vn = sqrtf(lpos.vx * lpos.vx + lpos.vy * lpos.vy) * 100.0f; // 地速：水平速度大小
+		msg.ve = lpos.vz * 100.0f;                                      // 垂直速度：向下速度
+		msg.vd = -lpos.vx * 100.0f;                                     // 北向速度：NED 北向速度
 
 		msg.heading = static_cast<uint16_t>(math::degrees(lpos.heading) * 100.0f);
 
