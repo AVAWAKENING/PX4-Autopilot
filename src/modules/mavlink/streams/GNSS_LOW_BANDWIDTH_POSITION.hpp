@@ -96,7 +96,13 @@ private:
 		msg.ve = lpos.vz * 100.0f;                                      // 垂直速度：向下速度
 		msg.vd = -lpos.vx * 100.0f;                                     // 北向速度：NED 北向速度
 
-		msg.heading = static_cast<uint16_t>(math::degrees(lpos.heading) * 100.0f);
+		float heading_deg = math::degrees(lpos.heading);
+
+		if (heading_deg < 0.0f) {
+			heading_deg += 360.0f;
+		}
+
+		msg.heading = static_cast<uint16_t>(heading_deg * 100.0f);
 
 			msg.satellites_visible = gps.satellites_used;
 			msg.fix_type = gps.fix_type;
