@@ -193,6 +193,7 @@ set(msg_files
 	SensorGnssRelative.msg
 	SensorGps.msg
 	SensorGyro.msg
+	GnssLowBandwidthPosition.msg
 	SensorGyroFft.msg
 	SensorGyroFifo.msg
 	SensorHygrometer.msg

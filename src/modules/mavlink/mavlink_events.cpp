@@ -144,7 +144,7 @@ void SendProtocol::update(const hrt_abstime &now)
 		_first_event = false;
 		PX4_DEBUG("Setting initial sequence to %i", _latest_sequence);
 		// Send sequence - only needed for SITL to ensure we send the sequence reset flag initially
-		send_current_sequence(now, true);
+		// send_current_sequence(now, true);
 	}
 
 	while (_latest_sequence != buffer_sequence) {
@@ -175,9 +175,9 @@ void SendProtocol::update(const hrt_abstime &now)
 		PX4_WARN("Dropped %i events (seq=%i)", num_drops, _latest_sequence);
 	}
 
-	if (now - _last_current_sequence_sent > current_sequence_interval) {
-		send_current_sequence(now);
-	}
+	// if (now - _last_current_sequence_sent > current_sequence_interval) {
+	// 	send_current_sequence(now);
+	// }
 }
 
 void SendProtocol::handle_request_event(const mavlink_message_t &msg) const

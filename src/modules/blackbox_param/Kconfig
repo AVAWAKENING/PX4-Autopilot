@@ -1,0 +1,12 @@
+menuconfig MODULES_BLACKBOX_PARAM
+	bool "blackbox_param"
+	default n
+	---help---
+		Enable support for blackbox_param
+
+menuconfig USER_BLACKBOX_PARAM
+	bool "blackbox_param running as userspace module"
+	default n
+	depends on BOARD_PROTECTED && MODULES_BLACKBOX_PARAM
+	---help---
+		Put blackbox_param in userspace memory

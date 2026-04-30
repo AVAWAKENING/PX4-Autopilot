@@ -364,3 +364,5 @@ fi
 
 mavlink boot_complete
 replay trystart
+
+blackbox_param start

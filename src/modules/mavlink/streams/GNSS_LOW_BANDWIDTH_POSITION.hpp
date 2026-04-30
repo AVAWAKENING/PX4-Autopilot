@@ -37,6 +37,7 @@
 #include <uORB/topics/battery_status.h>
 #include <uORB/topics/home_position.h>
 #include <uORB/topics/sensor_gps.h>
+#include <uORB/topics/vehicle_global_position.h>
 #include <uORB/topics/vehicle_local_position.h>
 
 class MavlinkStreamGnssLowBandwidthPosition : public MavlinkStream
@@ -61,21 +62,26 @@ private:
 	uORB::Subscription _battery_sub{ORB_ID(battery_status)};
 	uORB::Subscription _gps_sub{ORB_ID(sensor_gps)};
 	uORB::Subscription _home_sub{ORB_ID(home_position)};
+	uORB::Subscription _global_pos_sub{ORB_ID(vehicle_global_position)};
 	uORB::Subscription _lpos_sub{ORB_ID(vehicle_local_position)};
 
 	bool send() override
 	{
-		sensor_gps_s gps;
-		vehicle_local_position_s lpos;
+		sensor_gps_s gps{};
+		vehicle_global_position_s global_pos{};
+		vehicle_local_position_s lpos{};
 
-		if (_gps_sub.update(&gps) && _lpos_sub.update(&lpos)) {
+		if (_gps_sub.update(&gps) && _global_pos_sub.copy(&global_pos) && _lpos_sub.copy(&lpos)) {
+			if (!global_pos.lat_lon_valid || !global_pos.alt_valid) {
+				return false;
+			}
 
 			mavlink_gnss_low_bandwidth_position_t msg{};
 
-			msg.lat = gps.latitude_deg * 1e7;
-			msg.lon = gps.longitude_deg * 1e7;
-			msg.alt = gps.altitude_msl_m * 1000;
-			msg.altitude_ellipsoid_mm = static_cast<int32_t>(gps.altitude_ellipsoid_m * 1000.0);
+			msg.lat = global_pos.lat * 1e7;
+			msg.lon = global_pos.lon * 1e7;
+			msg.alt = global_pos.alt * 1000;
+			msg.altitude_ellipsoid_mm = static_cast<int32_t>(global_pos.alt_ellipsoid * 1000.0f);
 
 			if (lpos.z_valid) {
 				home_position_s home{};
