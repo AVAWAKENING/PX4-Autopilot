@@ -63,6 +63,8 @@
 #include "streams/ATTITUDE_TARGET.hpp"
 #include "streams/AUTOPILOT_VERSION.hpp"
 #include "streams/BATTERY_STATUS.hpp"
+#include "streams/BLACKBOX_LOW_BANDWIDTH_POSITION.hpp"
+#include "streams/BLACKBOX_LOW_BANDWIDTH_STATUS.hpp"
 #include "streams/CAMERA_IMAGE_CAPTURED.hpp"
 #include "streams/CAMERA_TRIGGER.hpp"
 #include "streams/COMMAND_LONG.hpp"
@@ -260,6 +262,12 @@ static const StreamListItem streams_list[] = {
 	create_stream_list_item<MavlinkStreamSysStatus>(),
 #endif // SYS_STATUS_HPP
 	create_stream_list_item<MavlinkStreamBatteryStatus>(),
+#if defined(BLACKBOX_LOW_BANDWIDTH_POSITION_HPP)
+	create_stream_list_item<MavlinkStreamBlackboxLowBandwidthPosition>(),
+#endif // BLACKBOX_LOW_BANDWIDTH_POSITION_HPP
+#if defined(BLACKBOX_LOW_BANDWIDTH_STATUS_HPP)
+	create_stream_list_item<MavlinkStreamBlackboxLowBandwidthStatus>(),
+#endif // BLACKBOX_LOW_BANDWIDTH_STATUS_HPP
 #if defined(BATTERY_INFO_HPP)
 	create_stream_list_item<MavlinkStreamBatteryInfo>(),
 #endif // BATTERY_INFO_HPP
