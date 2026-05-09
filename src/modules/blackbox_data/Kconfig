@@ -1,0 +1,12 @@
+menuconfig MODULES_BLACKBOX_DATA
+	bool "blackbox_data"
+	default n
+	---help---
+		Enable support for blackbox_data
+
+menuconfig USER_BLACKBOX_DATA
+	bool "blackbox_data running as userspace module"
+	default n
+	depends on BOARD_PROTECTED && MODULES_BLACKBOX_DATA
+	---help---
+		Put blackbox_data in userspace memory
