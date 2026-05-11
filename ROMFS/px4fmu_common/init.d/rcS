@@ -634,6 +634,11 @@ else
 		zenoh start
 	fi
 
+	#
+	# Start the blackbox.
+	#
+	. ${R}etc/init.d/rc.blackbox
+
 #
 # End of autostart.
 #
