@@ -541,7 +541,7 @@ MavlinkMissionManager::send()
 		}
 
 	} else if (_slow_rate_limiter.check(hrt_absolute_time())) {
-		send_mission_current(_current_seq);
+		// send_mission_current(_current_seq);
 
 		if ((_count[MAV_MISSION_TYPE_MISSION] > 0) && (_current_seq >= 0)) {
 			// send the reached message another 10 times
