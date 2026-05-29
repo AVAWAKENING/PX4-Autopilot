@@ -80,5 +80,10 @@ private:
 	uORB::Subscription _vehicle_local_position_sub{ORB_ID(vehicle_local_position)};
 	uORB::Subscription _battery_status_sub{ORB_ID(battery_status)};
 	uORB::Subscription _home_position_sub{ORB_ID(home_position)};
-	uORB::Publication<black_box_low_bandwidth_s> _black_box_low_bw_pub{ORB_ID(black_box_low_bandwidth)};
+	uORB::PublicationData<black_box_low_bandwidth_s> _black_box_low_bw_pub{ORB_ID(black_box_low_bandwidth)};
+
+	uint64_t _last_publish_time{0};
+	uint64_t _last_rate_measurement_time{0};
+	unsigned _publish_count{0};
+	float _publish_rate{0.0f};
 };
