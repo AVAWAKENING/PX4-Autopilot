@@ -1,6 +1,5 @@
 # PX4 base development environment
 FROM ubuntu:24.04
-LABEL maintainer="Daniel Agar <daniel@agar.ca>, Ramon Roche <mrpollo@gmail.com>"
 
 ENV DEBIAN_FRONTEND=noninteractive
 ENV LANG=C.UTF-8
@@ -20,8 +19,10 @@ COPY docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
 # Install PX4 Requirements
 COPY requirements.txt /tmp/requirements.txt
 COPY ubuntu.sh /tmp/ubuntu.sh
+RUN touch /.dockerenv
+RUN bash /tmp/ubuntu.sh
 
-RUN bash /tmp/ubuntu.sh --no-sim-tools
+RUN apt-get update && apt-get install -y tmux && rm -rf /var/lib/apt/lists/*
 
 # Make sure git is ok with your local copy
 RUN git config --global --add safe.directory '*'
