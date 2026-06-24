@@ -140,54 +140,69 @@ void BlackboxData::update_and_publish()
 	battery_status_s battery{};
 	home_position_s home{};
 
-	if (_sensor_gps_sub.copy(&gps) && _vehicle_global_position_sub.update(&global_pos) && _vehicle_local_position_sub.update(&lpos) && _battery_status_sub.copy(&battery)) {
-		if (!global_pos.lat_lon_valid || !global_pos.alt_valid) {
-			return;
+	// 先获取必要的消息数据
+	bool has_gps = _sensor_gps_sub.copy(&gps);
+	bool has_local_pos = _vehicle_local_position_sub.update(&lpos);
+	bool has_battery = _battery_status_sub.copy(&battery);
+
+	// 必须有 GPS、local position 和 battery 数据才能继续
+	if (!has_gps || !has_local_pos || !has_battery) {
+		return;
+	}
+
+	_home_position_sub.copy(&home);
+
+	black_box_low_bandwidth_s msg{};
+	msg.timestamp = hrt_absolute_time();
+	msg.time_utc_usec = gps.time_utc_usec;
+
+	// 先用 GPS 消息中的字段填充
+	msg.latitude_deg = gps.latitude_deg;
+	msg.longitude_deg = gps.longitude_deg;
+	msg.altitude_msl_m = gps.altitude_msl_m;
+	msg.altitude_ellipsoid_m = gps.altitude_ellipsoid_m;
+
+	// 如果有 global_pos 消息，则覆盖这四个字段
+	if (_vehicle_global_position_sub.update(&global_pos)) {
+		if (global_pos.lat_lon_valid && global_pos.alt_valid) {
+			msg.latitude_deg = global_pos.lat;
+			msg.longitude_deg = global_pos.lon;
+			msg.altitude_msl_m = global_pos.alt;
+			msg.altitude_ellipsoid_m = global_pos.alt_ellipsoid;
 		}
+	}
 
-		_home_position_sub.copy(&home);
+	if (home.valid_alt) {
+		msg.relative_alt_m = -(lpos.z - home.z);
+	} else {
+		msg.relative_alt_m = 0.0f;
+	}
 
-		black_box_low_bandwidth_s msg{};
-		msg.timestamp = hrt_absolute_time();
-		msg.time_utc_usec = gps.time_utc_usec;
+	msg.vn_m_s = lpos.vx;
+	msg.ve_m_s = lpos.vy;
+	msg.vd_m_s = lpos.vz;
 
-		msg.latitude_deg = global_pos.lat;
-		msg.longitude_deg = global_pos.lon;
-		msg.altitude_msl_m = global_pos.alt;
-		msg.altitude_ellipsoid_m = global_pos.alt_ellipsoid;
+	msg.heading_rad = lpos.heading;
 
-		if (home.valid_alt) {
-			msg.relative_alt_m = -(lpos.z - home.z);
-		} else {
-			msg.relative_alt_m = 0.0f;
-		}
+	msg.satellites_visible = gps.satellites_used;
+	msg.fix_type = gps.fix_type;
 
-		msg.vn_m_s = lpos.vx;
-		msg.ve_m_s = lpos.vy;
-		msg.vd_m_s = lpos.vz;
+	msg.battery_remaining = static_cast<uint8_t>(battery.remaining * 100.0f);
+	msg.rssi = 0;
 
-		msg.heading_rad = lpos.heading;
+	_black_box_low_bw_pub.update(msg);
 
-		msg.satellites_visible = gps.satellites_used;
-		msg.fix_type = gps.fix_type;
+	_publish_count++;
+	_last_publish_time = msg.timestamp;
 
-		msg.battery_remaining = static_cast<uint8_t>(battery.remaining * 100.0f);
-		msg.rssi = 0;
+	const hrt_abstime now = hrt_absolute_time();
+	constexpr hrt_abstime rate_measurement_interval = 5000_ms;
 
-		_black_box_low_bw_pub.update(msg);
-
-		_publish_count++;
-		_last_publish_time = msg.timestamp;
-
-		const hrt_abstime now = hrt_absolute_time();
-		constexpr hrt_abstime rate_measurement_interval = 5000_ms;
-
-		if (now - _last_rate_measurement_time >= rate_measurement_interval) {
-			const float dt = (now - _last_rate_measurement_time) / 1e6f;
-			_publish_rate = _publish_count / dt;
-			_publish_count = 0;
-			_last_rate_measurement_time = now;
-		}
+	if (now - _last_rate_measurement_time >= rate_measurement_interval) {
+		const float dt = (now - _last_rate_measurement_time) / 1e6f;
+		_publish_rate = _publish_count / dt;
+		_publish_count = 0;
+		_last_rate_measurement_time = now;
 	}
 }
 
