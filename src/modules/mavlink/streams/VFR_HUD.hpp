@@ -81,14 +81,16 @@ private:
 			_armed_sub.copy(&armed);
 
 			airspeed_validated_s airspeed_validated{};
-			_airspeed_validated_sub.copy(&airspeed_validated);
-			const bool airspeed_from_sensor = airspeed_validated.airspeed_source == airspeed_validated_s::SOURCE_SENSOR_1
-							  || airspeed_validated.airspeed_source == airspeed_validated_s::SOURCE_SENSOR_2
-							  || airspeed_validated.airspeed_source == airspeed_validated_s::SOURCE_SENSOR_3;
+		_airspeed_validated_sub.copy(&airspeed_validated);
+		const bool airspeed_from_sensor = airspeed_validated.airspeed_source == airspeed_validated_s::SOURCE_SENSOR_1
+						  || airspeed_validated.airspeed_source == airspeed_validated_s::SOURCE_SENSOR_2
+						  || airspeed_validated.airspeed_source == airspeed_validated_s::SOURCE_SENSOR_3;
 
-			mavlink_vfr_hud_t msg{};
-			// display NAN in case of source not being one of the sensors
-			msg.airspeed = airspeed_from_sensor ? airspeed_validated.calibrated_airspeed_m_s : NAN;
+		mavlink_vfr_hud_t msg{};
+		// display airspeed from sensor or ground-minus-wind estimation
+		// Modified: Also show airspeed when using GROUND_MINUS_WIND method (source=0)
+		msg.airspeed = (airspeed_from_sensor || airspeed_validated.airspeed_source == airspeed_validated_s::SOURCE_GROUND_MINUS_WIND)
+			       ? airspeed_validated.calibrated_airspeed_m_s : NAN;
 			msg.groundspeed = sqrtf(lpos.vx * lpos.vx + lpos.vy * lpos.vy);
 			msg.heading = math::degrees(matrix::wrap_2pi(lpos.heading));
 

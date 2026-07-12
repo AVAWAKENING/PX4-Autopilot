@@ -12,6 +12,7 @@ cd "${PX4_BUILD_DIR}/src/modules/simulation/gz_bridge"
 export PX4_GZ_MODEL_POSE="0,0"
 export PX4_SYS_AUTOSTART=4003
 export PX4_SIM_MODEL=gz_rc_cessna
+export PX4_GZ_WORLD=windy
 export GZ_IP=127.0.0.1
 
 echo "========== 启动 PX4 SITL 单机仿真 =========="

@@ -204,6 +204,21 @@ FixedWingModeManager::wind_poll(const hrt_abstime now)
 	}
 }
 
+float
+FixedWingModeManager::calculateAirspeedFromGroundspeed(const Vector2f &ground_speed_sp, const Vector2f &wind_velocity)
+{
+	// Calculate airspeed vector: Airspeed = Ground speed - Wind velocity
+	Vector2f airspeed_vector = ground_speed_sp - wind_velocity;
+
+	// Compute airspeed magnitude
+	float airspeed = airspeed_vector.norm();
+
+	// Constrain within aircraft's min/max airspeed limits
+	airspeed = constrain(airspeed, _param_fw_airspd_min.get(), _param_fw_airspd_max.get());
+
+	return airspeed;
+}
+
 void
 FixedWingModeManager::manual_control_setpoint_poll()
 {
@@ -2064,6 +2079,10 @@ FixedWingModeManager::Run()
 					_pos_sp_triplet.current.vx = trajectory_setpoint.velocity[0];
 					_pos_sp_triplet.current.vy = trajectory_setpoint.velocity[1];
 					_pos_sp_triplet.current.vz = trajectory_setpoint.velocity[2];
+
+					// Calculate airspeed from ground speed setpoint and wind velocity
+					Vector2f ground_speed_sp(trajectory_setpoint.velocity[0], trajectory_setpoint.velocity[1]);
+					_pos_sp_triplet.current.cruising_speed = calculateAirspeedFromGroundspeed(ground_speed_sp, _wind_vel);
 
 					if (Vector3f(trajectory_setpoint.acceleration).isAllFinite()) {
 						Vector2f velocity_sp_2d(trajectory_setpoint.velocity[0], trajectory_setpoint.velocity[1]);

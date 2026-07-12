@@ -458,6 +458,18 @@ private:
 	void updateManualTakeoffStatus();
 
 	/**
+	 * @brief Calculate required airspeed from ground speed setpoint and wind velocity.
+	 *
+	 * Computes the airspeed needed to achieve a desired ground speed, considering wind effects.
+	 * The result is constrained within the aircraft's min/max airspeed limits.
+	 *
+	 * @param ground_speed_sp Ground velocity setpoint vector (vx, vy) [m/s]
+	 * @param wind_velocity Wind velocity vector (north, east) [m/s]
+	 * @return Constrained airspeed setpoint [m/s]
+	 */
+	float calculateAirspeedFromGroundspeed(const Vector2f &ground_speed_sp, const Vector2f &wind_velocity);
+
+	/**
 	 * @brief Updates timing information for landed and in-air states.
 	 *
 	 * @param now Current system time [us]
