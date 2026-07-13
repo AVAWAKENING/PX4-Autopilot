@@ -21,6 +21,7 @@ mkdir -p "${CCACHE_DIR}"
 
 docker run -it --rm -w "${CONTAINER_SRC_DIR}" \
 	--user="$(id -u):$(id -g)" \
+	--network fw_swarm_local \
 	--env=BRANCH_NAME \
 	--env=CCACHE_DIR="${CCACHE_DIR}" \
 	--volume=${CCACHE_DIR}:${CCACHE_DIR}:rw \

@@ -49,4 +49,13 @@ param set-default MIS_TKO_LAND_REQ 2
 #
 param set-default GPS_UBX_DYNMODEL 8
 
-param set-default SYS_HAS_NUM_ASPD 1 # by default require an airspeed sensor
+# 0 = Groundspeed minus windspeed, 1 = First airspeed sensor
+param set-default ASPD_PRIMARY 1
+
+# Horizontal wind uncertainty threshold for valid ground-minus-wind (m/s)
+param set-default ASPD_WERR_THR 4
+
+# System has no magnetometer
+param set-default SYS_HAS_MAG 0
+
+param set-default SYS_HAS_NUM_ASPD 1
