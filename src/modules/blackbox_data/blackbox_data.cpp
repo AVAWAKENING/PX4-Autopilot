@@ -40,6 +40,9 @@
 #include <math.h>
 #include <inttypes.h>
 
+// Logger module entry point
+extern "C" __EXPORT int logger_main(int argc, char *argv[]);
+
 using namespace time_literals;
 
 BlackboxData::BlackboxData() :
@@ -191,6 +194,22 @@ void BlackboxData::update_and_publish()
 	msg.rssi = 0;
 
 	_black_box_low_bw_pub.update(msg);
+
+	// 首次 fix_type >= 3 时启动日志记录
+	if (!_logger_started && msg.fix_type >= 3) {
+		PX4_INFO("GPS fix type >= 3, starting logger with -f flag");
+
+		// 调用 logger 模块的入口函数
+		const char *argv[] = {"logger", "start", "-f", nullptr};
+		int ret = logger_main(3, (char **)argv);
+
+		if (ret != 0) {
+			PX4_ERR("Failed to start logger (ret=%d), will retry next time", ret);
+		} else {
+			PX4_INFO("Logger started successfully in boot_until_shutdown mode");
+			_logger_started = true;  // 只有成功后才标记为已启动
+		}
+	}
 
 	_publish_count++;
 	_last_publish_time = msg.timestamp;

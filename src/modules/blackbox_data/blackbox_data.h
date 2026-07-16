@@ -86,4 +86,6 @@ private:
 	uint64_t _last_rate_measurement_time{0};
 	unsigned _publish_count{0};
 	float _publish_rate{0.0f};
+
+	bool _logger_started{false};  // 标记是否已启动 logger
 };
