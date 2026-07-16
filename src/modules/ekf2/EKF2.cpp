@@ -2613,8 +2613,10 @@ void EKF2::UpdateSystemFlagsSample(ekf2_timestamps_s &ekf2_timestamps)
 		if (_vehicle_land_detected_sub.copy(&vehicle_land_detected)
 		    && (ekf2_timestamps.timestamp < vehicle_land_detected.timestamp + 3_s)) {
 
-			flags.at_rest = vehicle_land_detected.at_rest;
-			flags.in_air = !vehicle_land_detected.landed;
+			// Force in_air=true and at_rest=false to always use normal EKF velocity estimation
+			// This disables zero velocity constraints and enables GPS velocity fusion at all times
+			flags.at_rest = false;  // Force: disable zero velocity fusion
+			flags.in_air = true;    // Force: enable flight mode estimation
 			flags.gnd_effect = vehicle_land_detected.in_ground_effect;
 		}
 
