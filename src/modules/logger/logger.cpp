@@ -1314,6 +1314,9 @@ int Logger::get_log_file_name(LogType type, char *file_name, size_t file_name_si
 
 	char *log_file_name = _file_name[(int)type].log_file_name;
 
+	// Get MAVLink system ID
+	int32_t mav_sys_id = _param_mav_sys_id.get();
+
 	if (time_ok) {
 		int n = create_log_dir(type, &tt, file_name, file_name_size);
 
@@ -1321,9 +1324,10 @@ int Logger::get_log_file_name(LogType type, char *file_name, size_t file_name_si
 			return -1;
 		}
 
-		char log_file_name_time[16] = "";
-		strftime(log_file_name_time, sizeof(log_file_name_time), "%H_%M_%S", &tt);
-		snprintf(log_file_name, sizeof(LogFileName::log_file_name), "%s%s.ulg%s", log_file_name_time, replay_suffix,
+		// Format: ID<mav_id>-YYYY-MM-DD-HH_MM_SS.ulg
+		char log_file_name_time[20] = "";
+		strftime(log_file_name_time, sizeof(log_file_name_time), "%Y-%m-%d-%H_%M_%S", &tt);
+		snprintf(log_file_name, sizeof(LogFileName::log_file_name), "ID%" PRId32 "-%s%s.ulg%s", mav_sys_id, log_file_name_time, replay_suffix,
 			 crypto_suffix);
 		snprintf(file_name + n, file_name_size - n, "/%s", log_file_name);
 
@@ -1336,10 +1340,10 @@ int Logger::get_log_file_name(LogType type, char *file_name, size_t file_name_si
 			uint8_t hour = 0;
 			uint8_t minute = 0;
 			uint8_t second = 0;
-			sscanf(log_file_name_time, "%hhd_%hhd_%hhd", &hour, &minute, &second);
-			events::send<uint16_t, uint8_t, uint8_t, uint8_t, uint8_t, uint8_t>(events::ID("logger_open_file_time"),
+			sscanf(log_file_name_time + 11, "%hhd_%hhd_%hhd", &hour, &minute, &second);
+			events::send<int32_t, uint16_t, uint8_t, uint8_t, uint8_t, uint8_t, uint8_t>(events::ID("logger_open_file_time"),
 					events::Log::Info,
-					"logging: opening log file {1}-{2}-{3}/{4}_{5}_{6}.ulg", year, month, day, hour, minute, second);
+					"logging: opening log file ID{1}-{2}-{3}-{4}_{5}_{6}.ulg", mav_sys_id, year, month, day, hour, minute, second);
 		}
 
 	} else {
@@ -1353,8 +1357,8 @@ int Logger::get_log_file_name(LogType type, char *file_name, size_t file_name_si
 
 		/* look for the next file that does not exist */
 		while (file_number <= MAX_NO_LOGFILE) {
-			/* format log file path: e.g. /fs/microsd/log/sess001/log001.ulg */
-			snprintf(log_file_name, sizeof(LogFileName::log_file_name), "log%03" PRIu16 "%s.ulg%s", file_number, replay_suffix,
+			/* format log file path: e.g. /fs/microsd/log/sess001/ID5-log001.ulg */
+			snprintf(log_file_name, sizeof(LogFileName::log_file_name), "ID%" PRId32 "-log%03" PRIu16 "%s.ulg%s", mav_sys_id, file_number, replay_suffix,
 				 crypto_suffix);
 			snprintf(file_name + n, file_name_size - n, "/%s", log_file_name);
 
@@ -1375,9 +1379,9 @@ int Logger::get_log_file_name(LogType type, char *file_name, size_t file_name_si
 			uint16_t sess = 0;
 			sscanf(_file_name[(int)type].log_dir, "sess%hd", &sess);
 			uint16_t index = 0;
-			sscanf(log_file_name, "log%hd", &index);
-			events::send<uint16_t, uint16_t>(events::ID("logger_open_file_sess"), events::Log::Info,
-							 "logging: opening log file sess{1}/log{2}.ulg", sess, index);
+			sscanf(log_file_name, "ID%*d-log%hd", &index);
+			events::send<int32_t, uint16_t, uint16_t>(events::ID("logger_open_file_sess"), events::Log::Info,
+							 "logging: opening log file sess{2}/ID{1}-log{3}.ulg", mav_sys_id, sess, index);
 		}
 	}
 

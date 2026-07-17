@@ -165,7 +165,7 @@ private:
 	struct LogFileName {
 		char log_dir[12];           ///< e.g. "2018-01-01" or "sess001"
 		int sess_dir_index{1};      ///< search starting index for 'sess<i>' directory name
-		char log_file_name[31];     ///< e.g. "log001.ulg" or "12_09_00_replayed.ulg"
+		char log_file_name[50];     ///< e.g. "ID5-2026-04-23-12_37_08.ulg" or "ID5-log001.ulg"
 		bool has_log_dir{false};
 	};
 
@@ -397,7 +397,8 @@ private:
 		(ParamInt<px4::params::SDLOG_PROFILE>) _param_sdlog_profile,
 		(ParamInt<px4::params::SDLOG_MISSION>) _param_sdlog_mission,
 		(ParamBool<px4::params::SDLOG_BOOT_BAT>) _param_sdlog_boot_bat,
-		(ParamBool<px4::params::SDLOG_UUID>) _param_sdlog_uuid
+		(ParamBool<px4::params::SDLOG_UUID>) _param_sdlog_uuid,
+		(ParamInt<px4::params::MAV_SYS_ID>) _param_mav_sys_id
 #if defined(PX4_CRYPTO)
 		, (ParamInt<px4::params::SDLOG_ALGORITHM>) _param_sdlog_crypto_algorithm,
 		(ParamInt<px4::params::SDLOG_KEY>) _param_sdlog_crypto_key,
