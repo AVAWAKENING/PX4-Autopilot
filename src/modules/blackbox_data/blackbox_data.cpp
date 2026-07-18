@@ -181,9 +181,9 @@ void BlackboxData::update_and_publish()
 		msg.relative_alt_m = 0.0f;
 	}
 
-	msg.vn_m_s = lpos.vx;
-	msg.ve_m_s = lpos.vy;
-	msg.vd_m_s = lpos.vz;
+	msg.vn_m_s = gps.vel_n_m_s;
+	msg.ve_m_s = gps.vel_e_m_s;
+	msg.vd_m_s = gps.vel_d_m_s;
 
 	msg.heading_rad = lpos.heading;
 
