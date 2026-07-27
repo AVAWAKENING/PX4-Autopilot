@@ -366,7 +366,7 @@ void FixedwingRateControl::Run()
 				const Vector3f angular_acceleration_setpoint = _rate_control.update(rates, body_rates_setpoint, angular_accel, dt,
 						_landed);
 
-				Vector3f control_u = angular_acceleration_setpoint * _airspeed_scaling * _airspeed_scaling;
+				Vector3f control_u = angular_acceleration_setpoint * _airspeed_scaling;
 
 				// Special case yaw in Acro: if the parameter FW_ACRO_YAW_EN is not set then don't rate-control yaw
 				if (!_vcontrol_mode.flag_control_attitude_enabled && _vcontrol_mode.flag_control_manual_enabled
