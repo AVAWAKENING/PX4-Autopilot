@@ -220,4 +220,7 @@ private:
 	void		vehicle_land_detected_poll();
 
 	float 		get_airspeed_and_update_scaling();
+
+	// encode parameter to real value
+	float decode_param(float fake_param);
 };

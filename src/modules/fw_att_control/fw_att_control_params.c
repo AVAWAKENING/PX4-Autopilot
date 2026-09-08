@@ -48,12 +48,12 @@
  *
  * @unit s
  * @min 0.2
- * @max 1.0
- * @decimal 2
+ * @max 5.0
+ * @decimal 3
  * @increment 0.05
  * @group FW Attitude Control
  */
-PARAM_DEFINE_FLOAT(FW_R_TC, 0.4f);
+PARAM_DEFINE_FLOAT(FW_R_TC, 3.2f);
 
 /**
  * Attitude pitch time constant
@@ -63,12 +63,12 @@ PARAM_DEFINE_FLOAT(FW_R_TC, 0.4f);
  *
  * @unit s
  * @min 0.2
- * @max 1.0
- * @decimal 2
+ * @max 5.0
+ * @decimal 3
  * @increment 0.05
  * @group FW Attitude Control
  */
-PARAM_DEFINE_FLOAT(FW_P_TC, 0.4f);
+PARAM_DEFINE_FLOAT(FW_P_TC, 3.6f);
 
 /**
  * Maximum positive / up pitch rate setpoint

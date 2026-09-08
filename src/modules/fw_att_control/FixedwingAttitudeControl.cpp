@@ -39,6 +39,11 @@ using namespace matrix;
 using math::constrain;
 using math::radians;
 
+float FixedwingAttitudeControl::decode_param(float fake_param)
+{
+	return fake_param / 4.0f - 0.5f;
+}
+
 FixedwingAttitudeControl::FixedwingAttitudeControl(bool vtol) :
 	ModuleParams(nullptr),
 	ScheduledWorkItem(MODULE_NAME, px4::wq_configurations::nav_and_controllers),
@@ -69,10 +74,10 @@ FixedwingAttitudeControl::init()
 void
 FixedwingAttitudeControl::parameters_update()
 {
-	_roll_ctrl.set_time_constant(_param_fw_r_tc.get());
+	_roll_ctrl.set_time_constant(decode_param(_param_fw_r_tc.get()));
 	_roll_ctrl.set_max_rate(radians(_param_fw_r_rmax.get()));
 
-	_pitch_ctrl.set_time_constant(_param_fw_p_tc.get());
+	_pitch_ctrl.set_time_constant(decode_param(_param_fw_p_tc.get()));
 	_pitch_ctrl.set_max_rate_pos(radians(_param_fw_p_rmax_pos.get()));
 	_pitch_ctrl.set_max_rate_neg(radians(_param_fw_p_rmax_neg.get()));
 

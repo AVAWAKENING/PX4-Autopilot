@@ -172,4 +172,7 @@ private:
 	void vehicle_attitude_setpoint_poll();
 	void vehicle_land_detected_poll();
 	float get_airspeed_constrained();
+
+	// encode parameter to real value
+	float decode_param(float fake_param);
 };

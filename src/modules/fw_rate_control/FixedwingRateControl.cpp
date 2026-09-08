@@ -40,6 +40,11 @@ using math::constrain;
 using math::interpolate;
 using math::radians;
 
+float FixedwingRateControl::decode_param(float fake_param)
+{
+	return fake_param / 4.0f - 0.5f;
+}
+
 FixedwingRateControl::FixedwingRateControl(bool vtol) :
 	ModuleParams(nullptr),
 	ScheduledWorkItem(MODULE_NAME, px4::wq_configurations::nav_and_controllers),
@@ -75,9 +80,9 @@ FixedwingRateControl::init()
 int
 FixedwingRateControl::parameters_update()
 {
-	const Vector3f rate_p = Vector3f(_param_fw_rr_p.get(), _param_fw_pr_p.get(), _param_fw_yr_p.get());
-	const Vector3f rate_i = Vector3f(_param_fw_rr_i.get(), _param_fw_pr_i.get(), _param_fw_yr_i.get());
-	const Vector3f rate_d = Vector3f(_param_fw_rr_d.get(), _param_fw_pr_d.get(), _param_fw_yr_d.get());
+	const Vector3f rate_p = Vector3f(decode_param(_param_fw_rr_p.get()), decode_param(_param_fw_pr_p.get()), _param_fw_yr_p.get());
+	const Vector3f rate_i = Vector3f(decode_param(_param_fw_rr_i.get()), decode_param(_param_fw_pr_i.get()), _param_fw_yr_i.get());
+	const Vector3f rate_d = Vector3f(decode_param(_param_fw_rr_d.get()), decode_param(_param_fw_pr_d.get()), _param_fw_yr_d.get());
 
 	_rate_control.setPidGains(rate_p, rate_i, rate_d);
 
@@ -358,7 +363,7 @@ void FixedwingRateControl::Run()
 					body_rates_setpoint = Vector3f(-_rates_sp.yaw, _rates_sp.pitch, _rates_sp.roll);
 				}
 
-				const Vector3f gain_ff(_param_fw_rr_ff.get(), _param_fw_pr_ff.get(), _param_fw_yr_ff.get());
+				const Vector3f gain_ff(decode_param(_param_fw_rr_ff.get()), decode_param(_param_fw_pr_ff.get()), _param_fw_yr_ff.get());
 				const Vector3f scaled_gain_ff = gain_ff / _airspeed_scaling;
 				_rate_control.setFeedForwardGain(scaled_gain_ff);
 

@@ -60,11 +60,11 @@ PARAM_DEFINE_INT32(FW_USE_AIRSPD, 1);
  * @unit %/rad/s
  * @min 0.0
  * @max 10
- * @decimal 3
+ * @decimal 4
  * @increment 0.005
  * @group FW Rate Control
  */
-PARAM_DEFINE_FLOAT(FW_PR_P, 0.08f);
+PARAM_DEFINE_FLOAT(FW_PR_P, 3.1f);
 
 /**
  * Pitch rate derivative gain.
@@ -74,11 +74,11 @@ PARAM_DEFINE_FLOAT(FW_PR_P, 0.08f);
  * @unit %/rad/s
  * @min 0.0
  * @max 10
- * @decimal 3
+ * @decimal 2
  * @increment 0.005
  * @group FW Rate Control
  */
-PARAM_DEFINE_FLOAT(FW_PR_D, 0.f);
+PARAM_DEFINE_FLOAT(FW_PR_D, 2.0f);
 
 /**
  * Pitch rate integrator gain.
@@ -86,11 +86,11 @@ PARAM_DEFINE_FLOAT(FW_PR_D, 0.f);
  * @unit %/rad
  * @min 0.0
  * @max 10
- * @decimal 3
+ * @decimal 2
  * @increment 0.005
  * @group FW Rate Control
  */
-PARAM_DEFINE_FLOAT(FW_PR_I, 0.1f);
+PARAM_DEFINE_FLOAT(FW_PR_I, 2.6f);
 
 /**
  * Pitch rate integrator limit
@@ -109,11 +109,11 @@ PARAM_DEFINE_FLOAT(FW_PR_IMAX, 0.4f);
  * @unit %/rad/s
  * @min 0.0
  * @max 10
- * @decimal 3
+ * @decimal 2
  * @increment 0.005
  * @group FW Rate Control
  */
-PARAM_DEFINE_FLOAT(FW_RR_P, 0.05f);
+PARAM_DEFINE_FLOAT(FW_RR_P, 3.1f);
 
 /**
  * Roll rate derivative gain
@@ -121,11 +121,11 @@ PARAM_DEFINE_FLOAT(FW_RR_P, 0.05f);
  * @unit %/rad/s
  * @min 0.0
  * @max 10
- * @decimal 3
+ * @decimal 2
  * @increment 0.005
  * @group FW Rate Control
  */
-PARAM_DEFINE_FLOAT(FW_RR_D, 0.0f);
+PARAM_DEFINE_FLOAT(FW_RR_D, 2.0f);
 
 /**
  * Roll rate integrator gain
@@ -137,7 +137,7 @@ PARAM_DEFINE_FLOAT(FW_RR_D, 0.0f);
  * @increment 0.01
  * @group FW Rate Control
  */
-PARAM_DEFINE_FLOAT(FW_RR_I, 0.1f);
+PARAM_DEFINE_FLOAT(FW_RR_I, 2.4f);
 
 /**
  * Roll integrator limit
@@ -209,7 +209,7 @@ PARAM_DEFINE_FLOAT(FW_YR_IMAX, 0.2f);
  * @increment 0.05
  * @group FW Rate Control
  */
-PARAM_DEFINE_FLOAT(FW_RR_FF, 0.5f);
+PARAM_DEFINE_FLOAT(FW_RR_FF, 2.0f);
 
 /**
  * Pitch rate feed forward
@@ -223,7 +223,7 @@ PARAM_DEFINE_FLOAT(FW_RR_FF, 0.5f);
  * @increment 0.05
  * @group FW Rate Control
  */
-PARAM_DEFINE_FLOAT(FW_PR_FF, 0.5f);
+PARAM_DEFINE_FLOAT(FW_PR_FF, 2.0f);
 
 /**
  * Yaw rate feed forward
