@@ -1,0 +1,6 @@
+module_name: HaiTai UART Motor Driver
+serial_config:
+  - command: haitai_uart start ${SERIAL_DEV} ${BAUD_PARAM}
+    port_config_param:
+      name: HTU_SER_CFG
+      group: HaiTai

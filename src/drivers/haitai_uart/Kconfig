@@ -1,0 +1,5 @@
+menuconfig DRIVERS_HAITAI_UART
+	bool "haitai_uart"
+	default n
+	---help---
+		Enable support for haitai_uart (HaiTai motor driver over UART-to-CAN bridge)
