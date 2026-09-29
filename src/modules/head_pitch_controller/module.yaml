@@ -1,0 +1,95 @@
+module_name: head_pitch_controller
+
+parameters:
+    - group: Head Pitch
+      definitions:
+
+        HTP_MAX_SPEED:
+            description:
+                short: 位置模式最大速度（启动时经 0xB2 下发到电机，-1 = 不下发）
+                long: |
+                  模块启动时经 haitai_uart 0xB2 命令下发到 Haitai 电机。
+                  值为 -1（默认）时跳过该条不下发；设为 >= 0 才会下发。
+                  电机侧断电不保存，因此每次模块启动都会自动重新下发。
+                  单位 0.01 Rpm，例如 3000 = 30.00 Rpm。
+                  修改后需 stop/start 模块才会重新下发。
+            type: int32
+            min: -1
+            max: 1000000
+            default: -1
+
+        HTP_MAX_QCUR:
+            description:
+                short: 最大Q轴电流（启动时经 0xB3 下发到电机，-1 = 不下发）
+                long: |
+                  模块启动时经 haitai_uart 0xB3 命令下发到 Haitai 电机。
+                  值为 -1（默认）时跳过该条不下发；设为 >= 0 才会下发。
+                  单位 0.001 A，例如 5000 = 5.000 A。
+                  修改后需 stop/start 模块才会重新下发。
+            type: int32
+            min: -1
+            max: 50000
+            default: -1
+
+        HTP_POS_KP:
+            description:
+                short: 位置环 Kp（启动时经 0xB6 下发到电机，-1 = 不下发）
+                long: |
+                  模块启动时经 haitai_uart 0xB6 命令下发到 Haitai 电机。
+                  值为 -1（默认）时跳过该条不下发；设为 >= 0 才会下发。
+                  修改后需 stop/start 模块才会重新下发。
+            type: float
+            min: -1
+            max: 1000000
+            default: -1
+
+        HTP_POS_KI:
+            description:
+                short: 位置环 Ki（启动时经 0xB7 下发到电机，-1 = 不下发）
+                long: |
+                  模块启动时经 haitai_uart 0xB7 命令下发到 Haitai 电机。
+                  值为 -1（默认）时跳过该条不下发；设为 >= 0 才会下发。
+                  修改后需 stop/start 模块才会重新下发。
+            type: float
+            min: -1
+            max: 1000000
+            default: -1
+
+        HTP_VEL_KP:
+            description:
+                short: 速度环 Kp（启动时经 0xB8 下发到电机，-1 = 不下发）
+                long: |
+                  模块启动时经 haitai_uart 0xB8 命令下发到 Haitai 电机。
+                  值为 -1（默认）时跳过该条不下发；设为 >= 0 才会下发。
+                  修改后需 stop/start 模块才会重新下发。
+            type: float
+            min: -1
+            max: 1000000
+            default: -1
+
+        HTP_VEL_KI:
+            description:
+                short: 速度环 Ki（启动时经 0xB9 下发到电机，-1 = 不下发）
+                long: |
+                  模块启动时经 haitai_uart 0xB9 命令下发到 Haitai 电机。
+                  值为 -1（默认）时跳过该条不下发；设为 >= 0 才会下发。
+                  修改后需 stop/start 模块才会重新下发。
+            type: float
+            min: -1
+            max: 1000000
+            default: -1
+
+        HTP_CNT_PER_RAD:
+            description:
+                short: pitch(rad) 到 0xC2 位置指令(Count)的转换系数
+                long: |
+                  0xC2 绝对位置指令按 cmd(Count) = pitch(rad) × 本参数 计算。
+                  电机一圈 = 16384 Count；默认 2607.594 = 16384 / 2π，
+                  即无减速箱、电机轴角度直接跟随 pitch 的情形。
+                  若电机与头部之间有减速比 N，应设为 N × 2607.594；
+                  方向相反时取负值。运行中修改立即生效。
+            type: float
+            decimal: 3
+            min: -1000000
+            max: 1000000
+            default: 2607.594

@@ -5,3 +5,6 @@
 
 # enable onboard OSD chip
 # atxxxx start -s
+
+# Head pitch controller (Haitai motor via /dev/ttyS3 UART-CAN bridge)
+head_pitch_controller start

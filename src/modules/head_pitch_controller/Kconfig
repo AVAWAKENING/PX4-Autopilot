@@ -1,0 +1,12 @@
+menuconfig MODULES_HEAD_PITCH_CONTROLLER
+	bool "head_pitch_controller"
+	default n
+	---help---
+		Enable support for head_pitch_controller
+
+menuconfig USER_HEAD_PITCH_CONTROLLER
+	bool "head_pitch_controller running as userspace module"
+	default n
+	depends on BOARD_PROTECTED && MODULES_HEAD_PITCH_CONTROLLER
+	---help---
+		Put head_pitch_controller in userspace memory

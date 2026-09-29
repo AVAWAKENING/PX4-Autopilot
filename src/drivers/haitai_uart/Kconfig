@@ -1,0 +1,5 @@
+menuconfig DRIVERS_HAITAI_UART
+	bool "haitai_uart"
+	default n
+	---help---
+		Enable support for haitai_uart driver skeleton (write_test/read_test exports)
